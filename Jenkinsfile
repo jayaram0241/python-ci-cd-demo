@@ -32,12 +32,14 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 sh '''
+                #!/bin/bash
                 source $VENV_DIR/bin/activate
                 pip install --upgrade pip
                 pip install -r requirements.txt
                 '''
             }
         }
+
 
         stage('Run Tests') {
             steps {
