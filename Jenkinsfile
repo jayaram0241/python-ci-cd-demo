@@ -1,28 +1,47 @@
 pipeline {
     agent any
 
+    environment {
+        VENV_DIR = 'venv'   // name of virtual environment folder
+    }
+
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/jayaram0241/python-ci-cd-demo.git'
+                git branch: 'main', url: 'https://github.com/<your-username>/python-ci-cd-demo.git'
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Setup Python Environment') {
             steps {
-                sh 'pip install -r requirements.txt'
+                sh '''
+                # Create virtual environment if it doesn't exist
+                if [ ! -d "$VENV_DIR" ]; then
+                    python3 -m venv $VENV_DIR
+                fi
+
+                # Upgrade pip inside the virtual environment
+                source $VENV_DIR/bin/activate
+                pip install --upgrade pip
+                pip install -r requirements.txt
+                '''
             }
         }
 
         stage('Run Tests') {
             steps {
-                sh 'pytest -v'
+                sh '''
+                source $VENV_DIR/bin/activate
+                pytest -v
+                '''
             }
         }
 
         stage('Package App') {
             steps {
-                sh 'zip -r app.zip app.py'
+                sh '''
+                zip -r app.zip app.py
+                '''
             }
         }
 
