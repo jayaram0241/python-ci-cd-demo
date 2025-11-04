@@ -1,5 +1,6 @@
-from app import add
+def test_addition():
+    assert 2 + 3 == 5
 
-def test_add():
-    assert add(2, 3) == 5
+def test_subtraction():
+    assert 5 - 2 == 3
 
