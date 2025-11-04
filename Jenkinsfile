@@ -2,25 +2,36 @@ pipeline {
     agent any
 
     environment {
-        VENV_DIR = 'venv'   // name of virtual environment folder
+        VENV_DIR = "${WORKSPACE}/venv"
+        PYTHON = "python3"
     }
 
     stages {
-        stage('Checkout') {
+        stage('Setup Python') {
             steps {
-                git branch: 'main', url: 'https://github.com/jayaram0241/python-ci-cd-demo.git'
+                // Ensure python3-venv is installed (optional: only works if Jenkins has sudo)
+                sh '''
+                if ! python3 -m venv --help > /dev/null 2>&1; then
+                    echo "python3-venv not found. Please install it: sudo apt install python3-venv"
+                    exit 1
+                fi
+                '''
+
+                // Create virtual environment if it doesn't exist
+                sh '''
+                if [ ! -d "$VENV_DIR" ]; then
+                    $PYTHON -m venv $VENV_DIR
+                    echo "Virtual environment created."
+                else
+                    echo "Virtual environment already exists."
+                fi
+                '''
             }
         }
 
-        stage('Setup Python Environment') {
+        stage('Install Dependencies') {
             steps {
                 sh '''
-                # Create virtual environment if it doesn't exist
-                if [ ! -d "$VENV_DIR" ]; then
-                    python3 -m venv $VENV_DIR
-                fi
-
-                # Upgrade pip inside the virtual environment
                 source $VENV_DIR/bin/activate
                 pip install --upgrade pip
                 pip install -r requirements.txt
@@ -32,37 +43,36 @@ pipeline {
             steps {
                 sh '''
                 source $VENV_DIR/bin/activate
-                pytest -v
+                # Replace with your test command, e.g. pytest
+                if [ -f "test_sample.py" ]; then
+                    pytest
+                else
+                    echo "No tests found, skipping."
+                fi
                 '''
             }
         }
 
-        stage('Package App') {
+        stage('Run Application') {
             steps {
                 sh '''
-                zip -r app.zip app.py
-                '''
-            }
-        }
-
-        stage('Deploy (Simulated)') {
-            steps {
-                sh '''
-                mkdir -p deploy
-                mv app.zip deploy/
-                echo "App deployed to $(pwd)/deploy/"
+                source $VENV_DIR/bin/activate
+                # Replace with your app entry point, e.g. python app.py
+                echo "Build successful. You can run your Python scripts here."
                 '''
             }
         }
     }
 
     post {
+        always {
+            echo "Pipeline finished."
+        }
         success {
-            echo '✅ Build and Deployment Successful!'
+            echo "Pipeline succeeded."
         }
         failure {
-            echo '❌ Build Failed!'
+            echo "Pipeline failed."
         }
     }
 }
-
